@@ -1,0 +1,46 @@
+# EightPoints GuzzleBundle
+# A full list of configuration options can be found here:
+# https://github.com/8p/EightPointsGuzzleBundle/blob/master/src/Resources/doc/configuration-reference.md
+eight_points_guzzle:
+    # (de)activate logging/profiler; default: %kernel.debug%
+    logging: true
+
+    # configure when a response is considered to be slow (in ms); default 0 (disabled)
+    slow_response_time: 1000
+
+    clients:
+        api_365:
+            # Write here the host where to do requests
+            base_url: "%env(AX_API_RESOURCE)%"
+
+            # Request options: http://docs.guzzlephp.org/en/stable/request-options.html
+            options:
+                # timeout in seconds
+                timeout: 600
+
+                # set to false to disable throwing exceptions on an HTTP protocol errors (4xx and 5xx responses)
+                http_errors: true
+
+                # each key is the name of a header, and each value is a string or array of strings representing the
+                # header field values.
+                headers:
+                    User-Agent: "EightPointsGuzzleBundle/v7"
+                    Accept: "application/json"
+                    Prefer: "odata.maxpagesize=2000"
+
+                auth: oauth2
+
+            # Find plugins here:
+            # https://github.com/8p/EightPointsGuzzleBundle#known-and-supported-plugins
+            plugin:
+                oauth2:
+                    base_uri:       "%env(AX_API_AUTH_URI)%"
+                    token_url:      "%env(AX_API_TENANT_ID)%/%env(AX_API_TOKEN_ENDPOINT)%"
+                    client_id:      "%env(AX_API_CLIENT_ID)%"
+                    client_secret:  "%env(AX_API_CLIENT_SECRET)%"
+                    username:       "%env(AX_API_USERNAME)%"
+                    password:       "%env(AX_API_PASSWORD)%"
+                    resource:       "%env(AX_API_RESOURCE)%"
+                    auth_location:  "body"
+                    # persistent:      true
+                    grant_type:     "Sainsburys\\Guzzle\\Oauth2\\GrantType\\PasswordCredentials"

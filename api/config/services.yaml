@@ -2,24 +2,179 @@
 # Files in the packages/ subdirectory configure your dependencies.
 
 # Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
+    locale: "en"
+
+    # Data Entities Names
+    entity.sales_order: SalesOrderHeadersV2
+    entity.sales_order_line: SalesOrderLines
+    entity.customer: CustomersV3
+    # entity.article: ReleasedDistinctProductsV2
+    # entity.production_order: ProductionOrderHeaders
+    # entity.bom: BillOfMaterialsHeaders
+    # entity.bom_line: BillOfMaterialsLinesV2
+    # entity.po_bom_line: ProductionOrderBillOfMaterialLines
+    # entity.po_route_operation: ProductionOrderRouteOperations
+    # entity.route_operation: RouteOperations # can use RouteOperationsV2 instead off
+    # entity.route: RouteHeaders
+    # entity.route_version: RouteVersions
+    # entity.vendor: VendorsV2
+    # entity.arrival_journal_header: ItemArrivalJournalHeadersV2
+    # entity.arrival_journal_line: ItemArrivalJournalLinesV2
+    # entity.purchase_order: PurchaseOrderHeadersV2
+    # entity.purchase_order_line: PurchaseOrderLinesV2
+    # entity.report_finished: ProdReportFinishedLogs
+    # entity.product_info_interface: ProductInfoInterfaces
+    # entity.invent_serial_item: LAC_InventSerialItem
+    # entity.license_plate: LAC_WHSLicensePlates
+    # entity.legal_entities: LegalEntities
+    # entity.lac_sales_order_line: LAC_SalesOrderLines
+    # entity.sales_invoice_line: SalesInvoiceV2Lines
+    # entity.sales_invoice: SalesInvoiceHeadersV2
+    # entity.worker: Workers
+    # entity.sales_order_confirmation: SalesOrderConfirmationHeaders
+    # entity.sales_order_confirmation_line: SalesOrderConfirmationLines
+    # entity.tranfer_order: TransferOrderHeaders
+    # entity.tranfer_order_line: LAC_TransferOrderLines
+    # entity.packing_slip_line: LAC_SalesPackingSlipLines
+    # entity.bom_version: BillOfMaterialsVersionsV2
+    # entity.sales_quotation: SalesQuotationHeadersV2
+    # entity.sales_quotation_line: SalesQuotationLines
+    # entity.products_categories: ProductCategories
+
+    # sub_entity.bom_line: BillOfMaterialsLineV2
+    # sub_entity.arrival_journal_line: ItemArrivalJournalLine
+    # sub_entity.arrival_journal_header_vendor: DefaultVendorV2
+    # sub_entity.arrival_journal_line_vendor: VendorV2
+    # sub_entity.purchase_order_header: PurchaseOrderHeaderV2
+    # sub_entity.purchase_order_line: PurchaseOrderLinesV2
+    # sub_entity.route_operation: RouteOperations
+    # sub_entity.route_bomline: BillOfMaterialsLines
+    # sub_entity.sales_order_header: SalesOrderHeaderV2
+    # sub_entity.sales_order_line: LAC_SalesOrderLines
+    # sub_entity.po_bom_line: ProdutionOrderBOMLines
+    # sub_entity.po_route_operation: ProdutionOrderRouteOperations
+    # sub_entity.arrival_journal_header: ItemArrivalJournalHeader
+    # sub_entity.sales_order_confirmation_line: SalesOrderConfirmationLines
+    # sub_entity.tranfer_order_line: LAC_TransferOrderLine
+    # sub_entity.sales_quotation_line: SalesQuotationLines
+    #  CUSTOMER DEFAULTS CST
+    customer.ADDRESSBOOKS: L-AC
+    customer.EMPLOYEERESPONSIBLENUMBER: ""
+    customer.CREDITLIMITISMANDATORY: Yes
+    customer.CREDITLIMIT: 0
+    customer.ONHOLDSTATUS: No
+    customer.COMMISSIONCUSTOMERGROUPID: "100"
+    customer.COMMISSIONSALESGROUPID: eStore
+    customer.DELIVERYTERMS: DAP
+    customer.PRIMARYCONTACTEMAILPURPOSE: business
+    customer.DELIVERYREASON: ""
+    customer.FNDFORMNOTEQUOTATION: ""
+    customer.FNDFORMNOTECONFIRMATION: ""
+    customer.FNDFORMNOTEPRODUCTION: ""
+    customer.FNDFORMNOTEPICKINGLIST: ""
+    customer.FNDFORMNOTEPACKINGSLIP: ""
+    customer.FNDFORMNOTEINVOICE: ""  
+    # SALES ORDER DEFAULTS CST 
+    sales_order.ISDELIVERYADDRESSORDERSPECIFIC: Yes
+    sales_order.SALESORDERORIGINCODE: ESTORE
+    sales_order.MULTILINEDISCOUNTCUSTOMERGROUPCODE: REFERRAL
+    sales_order.DEFAULTSHIPPINGWAREHOUSEID: "13"
+    sales_order.DEFAULTDELIVERYMODECODE: "0-ROAD"
 
 services:
+    Symfony\Component\DependencyInjection\ContainerInterface: '@service_container'
     # default configuration for services in *this* file
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
+        autowire: true # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
-        resource: '../src/'
-        exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
-            - '../src/Tests/'
+        resource: "../src/*"
+        exclude: "../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}"
+
+    # controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    App\Controller\:
+        resource: "../src/Controller"
+        tags: ["controller.service_arguments"]
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    # This connextor it's for all sql requests.
+    # db.ref_article:
+    #     public: true # Useful for auto insert onto container.
+    #     class: Doctrine\DBAL\Connection
+    #     factory: Doctrine\DBAL\DriverManager::getConnection
+    #     arguments:
+    #         $params:
+    #             driver: pdo_mysql
+    #             url: "%env(DATABASE_URL_REF_ARTICLE)%"
+    #             charset: UTF8
+
+    'App\Serializer\CustomItemNormalizer':
+        arguments:
+            $normalizer: "@api_platform.serializer.normalizer.item"
+            $default_serializer: "@serializer.denormalizer.array"
+
+    'App\DataProvider\CustomerCollectionDataProvider':
+        tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+        autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    'App\DataProvider\CustomerItemDataProvider':
+        tags: [{ name: "api_platform.item_data_provider", priority: 2 }]
+        autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    'App\DataProvider\SalesOrderCollectionDataProvider':
+        tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+        autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    'App\DataProvider\SalesOrderItemDataProvider':
+        tags: [{ name: "api_platform.item_data_provider", priority: 2 }]
+        autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    'App\DataProvider\SalesOrderLineCollectionDataProvider':
+        tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+        autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    'App\DataProvider\SalesOrderLineItemDataProvider':
+        tags: [{ name: "api_platform.item_data_provider", priority: 2 }]
+        autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+
+    # 'App\DataProvider\ImportSalesOrderCollectionDataProvider':
+    #     tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+    #     autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    # 'App\DataProvider\SqlSalesOrderCollectionDataProvider':
+    #     tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+    #     autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    # 'App\DataProvider\SalesOrderLineCollectionDataProvider':
+    #     tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+    #     autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    # 'App\DataProvider\SqlSalesOrderLineCollectionDataProvider':
+    #     tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+    #     autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    # 'App\DataProvider\BiSalesOrderLineCollectionDataProvider':
+    #     tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+    #     autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    # 'App\Controller\ExtractRepairPfeController':
+    #     arguments:
+    #         $client: "@eight_points_guzzle.client.api_365"
+
+    # 'App\DataProvider\ImportProductsCategoriesCollectionDataProvider':
+    #     tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+    #     autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+
+    # 'App\DataProvider\ImportPurchaseOrderLineCollectionDataProvider':
+    #     tags: [{ name: "api_platform.collection_data_provider", priority: 2 }]
+    #     autoconfigure: false # Autoconfiguration must be disabled to set a custom priority
+    
